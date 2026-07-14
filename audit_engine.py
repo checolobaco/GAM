@@ -141,8 +141,20 @@ def parse_prefactura(reader):
                 if code_match:
                     code = code_match.group(0)
                     # Find count
-                    count_match = re.match(r'^(\d+)\s+', line_strip)
-                    count = int(count_match.group(1)) if count_match else 1
+                    tokens = line_strip.split()
+                    count = 1
+                    if len(tokens) >= 2:
+                        first_tok = tokens[0]
+                        if len(first_tok) == 6 and first_tok.isdigit():
+                            try:
+                                count = int(tokens[1])
+                            except ValueError:
+                                count = 1
+                        else:
+                            try:
+                                count = int(first_tok)
+                            except ValueError:
+                                count = 1
                     
                     # Extract clean description
                     desc = line_strip
@@ -201,27 +213,33 @@ def parse_historia_clinica(reader):
         pages.append(text if text else "")
         
     page_dates = []
+    page_datetimes = []
     last_valid_date = None
+    last_valid_datetime = "Unknown"
     
     for idx, page_content in enumerate(pages):
-        date_match = re.search(r'FECHA\s*(\d{2}/\d{2}/\d{2,4})', page_content)
+        date_match = re.search(r'(?:FECHA|Fecha:)\s*(\d{2}/\d{2}/\d{2,4})(?:\s*|-Fecha:\s*|\s+)(\d{2}:\d{2}(?::\d{2})?)?', page_content, re.IGNORECASE)
         if date_match:
             date_str = date_match.group(1)
+            time_str = date_match.group(2) if date_match.group(2) else "00:00:00"
             parts = date_str.split("/")
             if len(parts) == 3:
                 year = parts[2]
                 if len(year) == 2:
                     year = f"20{year}"
                 last_valid_date = f"{parts[0]}/{parts[1]}/{year}"
+                last_valid_datetime = f"{last_valid_date} {time_str}"
         else:
-            date_match = re.search(r'Fecha:\s*(\d{2}/\d{2}/\d{2})', page_content)
-            if date_match:
-                date_str = date_match.group(1)
+            fallback_match = re.search(r'Fecha:\s*(\d{2}/\d{2}/\d{2})', page_content, re.IGNORECASE)
+            if fallback_match:
+                date_str = fallback_match.group(1)
                 parts = date_str.split("/")
                 if len(parts) == 3:
                     last_valid_date = f"{parts[0]}/{parts[1]}/20{parts[2]}"
+                    last_valid_datetime = f"{last_valid_date} 00:00:00"
                     
         page_dates.append(last_valid_date)
+        page_datetimes.append(last_valid_datetime)
 
     valid_dates = [d for d in page_dates if d is not None]
     if valid_dates:
@@ -246,6 +264,7 @@ def parse_historia_clinica(reader):
     for idx, page_content in enumerate(pages):
         page_num = idx + 1
         page_date = page_dates[idx] if page_dates[idx] else "Unknown"
+        page_datetime = page_datetimes[idx] if page_datetimes[idx] else "Unknown"
         lines = page_content.splitlines()
         
         for line in lines:
@@ -255,7 +274,7 @@ def parse_historia_clinica(reader):
                     hc_data["procedures"].append({
                         "code": "441302",
                         "desc": "ESOFAGOGASTRODUODENOSCOPIA [EGD] CON O SIN BIOPSIA",
-                        "date": page_date,
+                        "date": page_datetime,
                         "page": page_num,
                         "type": "Endoscopia",
                         "line": line_strip
@@ -266,7 +285,7 @@ def parse_historia_clinica(reader):
                     hc_data["procedures"].append({
                         "code": "Sedación",
                         "desc": "Procedimiento bajo sedación (Anestesiología)",
-                        "date": page_date,
+                        "date": page_datetime,
                         "page": page_num,
                         "type": "Sedación",
                         "line": line_strip
@@ -282,7 +301,7 @@ def parse_historia_clinica(reader):
                         hc_data["procedures"].append({
                             "code": "37501",
                             "desc": "Paracentesis abdominal (Terapéutica / Evacuatoria)",
-                            "date": page_date,
+                            "date": page_datetime,
                             "page": page_num,
                             "type": p_type,
                             "line": line_strip
@@ -294,18 +313,18 @@ def parse_historia_clinica(reader):
                 for j in range(lines.index(line) + 1, min(len(lines), lines.index(line) + 5)):
                     next_line = lines[j].strip()
                     if "observacion" in next_line.lower() or "observación" in next_line.lower():
-                        if not any(s["date"] == page_date for s in hc_data["stay_details"]):
+                        if not any(s["date"] == page_datetime for s in hc_data["stay_details"]):
                             hc_data["stay_details"].append({
-                                "date": page_date,
+                                "date": page_datetime,
                                 "page": page_num,
                                 "unit": "Observación Urgencias",
                                 "line": next_line
                             })
                             break
                     elif "hospitalizacion" in next_line.lower() or "hospitalización" in next_line.lower() or "piso" in next_line.lower():
-                        if not any(s["date"] == page_date for s in hc_data["stay_details"]):
+                        if not any(s["date"] == page_datetime for s in hc_data["stay_details"]):
                             hc_data["stay_details"].append({
-                                "date": page_date,
+                                "date": page_datetime,
                                 "page": page_num,
                                 "unit": "Hospitalización Piso",
                                 "line": next_line
@@ -353,7 +372,7 @@ def parse_historia_clinica(reader):
                             "qty": qty,
                             "action": action,
                             "type": med_type,
-                            "date": page_date,
+                            "date": page_datetime,
                             "page": page_num
                         })
 
@@ -361,7 +380,7 @@ def parse_historia_clinica(reader):
             line_strip = line.strip()
             if "sistema no deja cobrar insumos" in line_strip.lower():
                 hc_data["system_errors"].append({
-                    "date": page_date,
+                    "date": page_datetime,
                     "page": page_num,
                     "line": line_strip
                 })
@@ -369,12 +388,14 @@ def parse_historia_clinica(reader):
                 if "colocacion" in line_strip.lower() or "coloca" in line_strip.lower() or "retira" in line_strip.lower() or "drenaje" in line_strip.lower():
                     if not any(s["line"] == line_strip for s in hc_data["supplies_mentions"]):
                         hc_data["supplies_mentions"].append({
-                            "date": page_date,
+                            "date": page_datetime,
                             "page": page_num,
                             "item": "Catéter Pigtail",
                             "line": line_strip
                         })
                         
+    hc_data["pages_content"] = pages
+    hc_data["page_datetimes"] = page_datetimes
     return hc_data
 
 def run_local_rule_based_audit(prefactura_path, historia_clinica_path, warning_msg=None):
@@ -506,6 +527,7 @@ def run_local_rule_based_audit(prefactura_path, historia_clinica_path, warning_m
             "hc_qty": hc_qty,
             "status": status,
             "detail": detail,
+            "dates": find_dates_for_term(name, code, hc_data["pages_content"], hc_data["page_datetimes"]),
             "missing_cost": cost_diff
         })
 
@@ -537,6 +559,7 @@ def run_local_rule_based_audit(prefactura_path, historia_clinica_path, warning_m
         "missing_days": missing_days,
         "status": status,
         "detail": detail,
+        "dates": [s["date"] for s in hc_data["stay_details"] if s.get("date")],
         "missing_cost": missing_stay_cost
     })
 
@@ -646,6 +669,7 @@ def run_local_rule_based_audit(prefactura_path, historia_clinica_path, warning_m
             "hc_qty": int(timeline_sum),
             "status": status,
             "detail": detail,
+            "dates": [m["date"] for m in matches if m.get("date")],
             "missing_cost": cost_diff
         })
 
@@ -677,6 +701,7 @@ def run_local_rule_based_audit(prefactura_path, historia_clinica_path, warning_m
             "hc_qty": 1,
             "status": pigtail_status,
             "detail": pigtail_detail,
+            "dates": find_dates_for_term("Pigtail", "INS-PIGTAIL", hc_data["pages_content"], hc_data["page_datetimes"]),
             "missing_cost": pigtail_cost_diff
         })
         
@@ -1167,7 +1192,8 @@ def compare_audits(ai_res, local_res):
 
 def update_learning_files(ai_res, local_res, comparison, prefactura_path):
     try:
-        os.makedirs("static", exist_ok=True)
+        data_dir = os.getenv("DATA_DIR", "data")
+        os.makedirs(data_dir, exist_ok=True)
         
         # 1. Append to learning_logs.jsonl
         log_entry = {
@@ -1180,14 +1206,15 @@ def update_learning_files(ai_res, local_res, comparison, prefactura_path):
             "discrepancies": comparison["discrepancies"]
         }
         
-        with open("static/learning_logs.jsonl", "a", encoding="utf-8") as f:
+        log_path = os.path.join(data_dir, "learning_logs.jsonl")
+        with open(log_path, "a", encoding="utf-8") as f:
             f.write(json.dumps(log_entry, ensure_ascii=False) + "\n")
             
         # 2. Update discovered_catalog.json
         pf_reader = PdfReader(prefactura_path)
         pf_items = parse_prefactura(pf_reader)
         
-        catalog_path = "static/discovered_catalog.json"
+        catalog_path = os.path.join(data_dir, "discovered_catalog.json")
         catalog = {"medications": {}, "procedures": {}, "supplies": {}}
         
         if os.path.exists(catalog_path):
@@ -1261,10 +1288,35 @@ def generate_telemetry_markdown(comparison):
         for d in discrepancies:
             md += f"| {d['category']} | {d['item']} | {d['ai_value']} | {d['local_value']} | {d['discrepancy']} |\n"
             
-        md += "\n> [!TIP]\n"
-        md += "> Estas discrepancias se han registrado automáticamente en `/static/learning_logs.jsonl` para permitir el refinamiento futuro del motor de reglas locales.\n"
+        md += "\n> [!TIP]\n"        
+        data_dir = os.getenv("DATA_DIR", "data")
+        md += f"> Estas discrepancias se han registrado automáticamente en `/{data_dir}/learning_logs.jsonl` para permitir el refinamiento futuro del motor de reglas locales.\n"
         
     return md
+
+def find_dates_for_term(term, code, pages, page_datetimes):
+    found_dates = []
+    term_clean = term.upper().strip()
+    import unicodedata
+    def strip_accents(s):
+        return ''.join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn')
+    term_clean = strip_accents(term_clean)
+    code_clean = str(code).upper().strip()
+    
+    # Get significant words for matching
+    words = [w for w in term_clean.split() if len(w) > 3]
+    match_words = words[:2]
+    
+    for idx, page_content in enumerate(pages):
+        page_upper = strip_accents(page_content.upper())
+        matches_code = code_clean and len(code_clean) > 3 and code_clean in page_upper
+        matches_words = len(match_words) >= 1 and all(w in page_upper for w in match_words)
+        
+        if matches_code or matches_words:
+            date_val = page_datetimes[idx]
+            if date_val and date_val != "Unknown" and date_val not in found_dates:
+                found_dates.append(date_val)
+    return found_dates
 
 def run_audit(prefactura_path, historia_clinica_path):
     print("--- INICIANDO PROCESO DE AUDITORIA ---")
@@ -1272,18 +1324,39 @@ def run_audit(prefactura_path, historia_clinica_path):
         # 1. Attempt AI Audit
         ai_res = run_ai_audit(prefactura_path, historia_clinica_path)
         
-        # 2. Run local rules in shadow mode
+        # 2. Enrich AI results with dates from EMR
+        try:
+            print("Enriching AI results with clinical dates/times...")
+            hc_reader = PdfReader(historia_clinica_path)
+            hc_data = parse_historia_clinica(hc_reader)
+            
+            for p in ai_res.get("procedures", []):
+                if not p.get("dates"):
+                    p["dates"] = find_dates_for_term(p.get("name", ""), p.get("code", ""), hc_data["pages_content"], hc_data["page_datetimes"])
+            for s in ai_res.get("supplies", []):
+                if not s.get("dates"):
+                    s["dates"] = find_dates_for_term(s.get("name", ""), s.get("code", ""), hc_data["pages_content"], hc_data["page_datetimes"])
+            for m in ai_res.get("medications", []):
+                if not m.get("dates"):
+                    m["dates"] = find_dates_for_term(m.get("name", ""), m.get("code", ""), hc_data["pages_content"], hc_data["page_datetimes"])
+            for e in ai_res.get("estancias", []):
+                if not e.get("dates"):
+                    e["dates"] = [s["date"] for s in hc_data["stay_details"] if s.get("date")]
+        except Exception as enrich_err:
+            print(f"Error enriching AI results with dates: {enrich_err}")
+            
+        # 3. Run local rules in shadow mode
         try:
             print("Running local rules in shadow mode...")
             local_res = run_local_rule_based_audit(prefactura_path, historia_clinica_path)
             
-            # 3. Compare audits
+            # 4. Compare audits
             comparison = compare_audits(ai_res, local_res)
             
-            # 4. Update learning files
+            # 5. Update learning files
             update_learning_files(ai_res, local_res, comparison, prefactura_path)
             
-            # 5. Background shadow audit completes
+            # 6. Background shadow audit completes
             pass
         except Exception as shadow_err:
             print(f"Shadow auditing failed: {shadow_err}")

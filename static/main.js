@@ -21,6 +21,66 @@ document.addEventListener("DOMContentLoaded", () => {
     const btnCopyMd = document.getElementById("btnCopyMd");
     const mdPreviewContent = document.getElementById("mdPreviewContent");
 
+    // Modal Control Elements
+    const datesModal = document.getElementById("datesModal");
+    const modalTitle = document.getElementById("modalTitle");
+    const modalItemDesc = document.getElementById("modalItemDesc");
+    const modalDatesList = document.getElementById("modalDatesList");
+    const modalCloseBtn = document.getElementById("modalCloseBtn");
+
+    function showDatesModal(name, dates) {
+        modalTitle.textContent = "Registro de Fechas y Horas";
+        modalItemDesc.textContent = name;
+        modalDatesList.innerHTML = "";
+        
+        if (dates.length === 0 || (dates.length === 1 && dates[0] === "")) {
+            modalDatesList.innerHTML = `<div class="date-item-card" style="opacity: 0.7; justify-content: center;">
+                <span class="calendar-icon">📅</span>
+                <span>Sin registros de fechas de aplicación en EMR</span>
+            </div>`;
+        } else {
+            dates.forEach(d => {
+                const card = document.createElement("div");
+                card.className = "date-item-card";
+                const parts = d.split(" ");
+                const datePart = parts[0] || d;
+                const timePart = parts[1] || "";
+                card.innerHTML = `
+                    <span class="calendar-icon">📅</span>
+                    <div>
+                        <span>${datePart}</span>
+                        ${timePart ? ` a las <span class="time-value">${timePart}</span>` : ''}
+                    </div>
+                `;
+                modalDatesList.appendChild(card);
+            });
+        }
+        datesModal.classList.remove("hidden");
+    }
+
+    // Event delegation for dates button
+    document.addEventListener("click", function(e) {
+        const btn = e.target.closest(".btn-dates-action");
+        if (btn) {
+            const name = btn.getAttribute("data-name");
+            const datesStr = btn.getAttribute("data-dates");
+            const dates = datesStr ? datesStr.split(",") : [];
+            showDatesModal(name, dates);
+        }
+    });
+
+    // Close modal listeners
+    if (modalCloseBtn) {
+        modalCloseBtn.addEventListener("click", () => datesModal.classList.add("hidden"));
+    }
+    if (datesModal) {
+        datesModal.addEventListener("click", (e) => {
+            if (e.target === datesModal) {
+                datesModal.classList.add("hidden");
+            }
+        });
+    }
+
     // Loading messages
     const loadingMessages = [
         "Leyendo y extrayendo textos de los archivos PDF...",
@@ -298,14 +358,12 @@ document.addEventListener("DOMContentLoaded", () => {
         procBody.innerHTML = "";
         data.procedures.forEach(p => {
             const tr = document.createElement("tr");
-            const datesStr = p.dates && p.dates.length > 0 ? `Registrado en HC el: ${p.dates.join(', ')}` : 'Sin registro de fecha';
-            const nameHtml = p.dates && p.dates.length > 0 
-                ? `<span class="tooltip" data-tooltip="${datesStr}">${p.name}</span>`
-                : p.name;
+            const datesList = p.dates || [];
+            const datesButtonHtml = `<button class="btn-dates-action" data-name="${p.name}" data-dates="${datesList.join(',')}">📅 Ver Fechas (${datesList.length})</button>`;
                 
             tr.innerHTML = `
                 <td><strong>${p.code}</strong></td>
-                <td>${nameHtml}</td>
+                <td><div style="font-weight: 500;">${p.name}</div></td>
                 <td>${p.billed_qty}</td>
                 <td>${p.hc_qty}</td>
                 <td><span class="status-badge ${p.status.toLowerCase()}">${p.status}</span></td>
@@ -313,6 +371,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <td class="${p.missing_cost > 0 ? 'text-danger' : 'text-success'}">
                     ${p.missing_cost > 0 ? `-${formatCOP(p.missing_cost)}` : '$0'}
                 </td>
+                <td>${datesButtonHtml}</td>
             `;
             procBody.appendChild(tr);
         });
@@ -322,8 +381,11 @@ document.addEventListener("DOMContentLoaded", () => {
         stayBody.innerHTML = "";
         data.estancias.forEach(e => {
             const tr = document.createElement("tr");
+            const datesList = e.dates || [];
+            const datesButtonHtml = `<button class="btn-dates-action" data-name="Estancia: ${e.observed_unit}" data-dates="${datesList.join(',')}">📅 Ver Fechas (${datesList.length})</button>`;
+            
             tr.innerHTML = `
-                <td>${e.period}</td>
+                <td><div style="font-weight: 500;">${e.period}</div></td>
                 <td>${e.billed_stays}</td>
                 <td>${e.hc_nights}</td>
                 <td class="text-danger">${e.missing_days} días</td>
@@ -331,6 +393,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <td>${e.observed_unit}</td>
                 <td><span class="status-badge discrepancia">${e.status}</span></td>
                 <td class="text-danger">-${formatCOP(e.missing_cost)}</td>
+                <td>${datesButtonHtml}</td>
             `;
             stayBody.appendChild(tr);
         });
@@ -341,9 +404,12 @@ document.addEventListener("DOMContentLoaded", () => {
         data.medications.forEach(m => {
             const diff = m.hc_qty - m.billed_qty;
             const tr = document.createElement("tr");
+            const datesList = m.dates || [];
+            const datesButtonHtml = `<button class="btn-dates-action" data-name="${m.name}" data-dates="${datesList.join(',')}">📅 Ver Fechas (${datesList.length})</button>`;
+            
             tr.innerHTML = `
                 <td><strong>${m.code}</strong></td>
-                <td>${m.name}</td>
+                <td><div style="font-weight: 500;">${m.name}</div></td>
                 <td>${m.billed_qty}</td>
                 <td>${m.hc_qty}</td>
                 <td class="${diff > 0 ? 'text-danger' : 'text-success'}">${diff > 0 ? `+${diff}` : diff}</td>
@@ -352,6 +418,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <td class="${m.missing_cost > 0 ? 'text-danger' : 'text-success'}">
                     ${m.missing_cost > 0 ? `-${formatCOP(m.missing_cost)}` : '$0'}
                 </td>
+                <td>${datesButtonHtml}</td>
             `;
             medBody.appendChild(tr);
         });
@@ -361,14 +428,12 @@ document.addEventListener("DOMContentLoaded", () => {
         supBody.innerHTML = "";
         data.supplies.forEach(s => {
             const tr = document.createElement("tr");
-            const datesStr = s.dates && s.dates.length > 0 ? `Registrado en HC el: ${s.dates.join(', ')}` : 'Sin registro de fecha';
-            const nameHtml = s.dates && s.dates.length > 0 
-                ? `<span class="tooltip" data-tooltip="${datesStr}">${s.name}</span>`
-                : s.name;
+            const datesList = s.dates || [];
+            const datesButtonHtml = `<button class="btn-dates-action" data-name="${s.name}" data-dates="${datesList.join(',')}">📅 Ver Fechas (${datesList.length})</button>`;
                 
             tr.innerHTML = `
                 <td><strong>${s.code}</strong></td>
-                <td>${nameHtml}</td>
+                <td><div style="font-weight: 500;">${s.name}</div></td>
                 <td>${s.billed_qty}</td>
                 <td>${s.hc_qty}</td>
                 <td><span class="status-badge ${s.status.toLowerCase()}">${s.status}</span></td>
@@ -376,6 +441,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <td class="${s.missing_cost > 0 ? 'text-danger' : 'text-success'}">
                     ${s.missing_cost > 0 ? `-${formatCOP(s.missing_cost)}` : '$0'}
                 </td>
+                <td>${datesButtonHtml}</td>
             `;
             supBody.appendChild(tr);
         });

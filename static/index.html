@@ -157,6 +157,7 @@
                                         <th>Estado</th>
                                         <th>Detalle / Hallazgo</th>
                                         <th>Pérdida</th>
+                                        <th>Soporte HC</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tableProcedimientosBody">
@@ -180,6 +181,7 @@
                                         <th>Unidad en HC</th>
                                         <th>Estado</th>
                                         <th>Pérdida Estimada</th>
+                                        <th>Soporte HC</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tableEstanciasBody">
@@ -203,6 +205,7 @@
                                         <th>Estado</th>
                                         <th>Hallazgo</th>
                                         <th>Pérdida</th>
+                                        <th>Soporte HC</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tableMedicamentosBody">
@@ -225,6 +228,7 @@
                                         <th>Estado</th>
                                         <th>Causa Raíz / Justificación Clínica</th>
                                         <th>Pérdida</th>
+                                        <th>Soporte HC</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tableSuministrosBody">
@@ -251,6 +255,22 @@
                 <button class="btn-secondary" id="btnReset">Cargar Nuevos Documentos</button>
             </div>
         </section>
+    </div>
+
+    <!-- Modal para ver fechas/horas detalladas -->
+    <div class="modal-overlay hidden" id="datesModal">
+        <div class="modal-card glass">
+            <div class="modal-header">
+                <h3 id="modalTitle">Registro de Fechas y Horas</h3>
+                <button class="modal-close-btn" id="modalCloseBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-desc" id="modalItemDesc">Descripción del elemento</div>
+                <div class="dates-list-container" id="modalDatesList">
+                    <!-- Tarjetas de fechas y horas se renderizan aquí -->
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="/static/main.js"></script>

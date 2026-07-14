@@ -53,6 +53,10 @@ async def audit_endpoint(
 # Serve other static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+data_dir = os.getenv("DATA_DIR", "data")
+os.makedirs(data_dir, exist_ok=True)
+app.mount(f"/{data_dir}", StaticFiles(directory=data_dir), name="data")
+
 if __name__ == "__main__":
     print("Iniciando servidor local en http://localhost:8000")
     uvicorn.run(app, host="127.0.0.1", port=8000)
