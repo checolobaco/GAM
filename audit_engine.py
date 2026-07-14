@@ -690,7 +690,9 @@ def run_local_rule_based_audit(prefactura_path, historia_clinica_path, warning_m
     # Generate report markdown
     report_md = ""
     if warning_msg:
-        report_md += f"> [!WARNING]\n> **{warning_msg}**\n\n"
+        report_md += f"**Método de Procesamiento:** Motor de Reglas Locales ({warning_msg})\n\n"
+    else:
+        report_md += f"**Método de Procesamiento:** Motor de Reglas Locales\n\n"
         
     report_md += f"# Informe de Auditoría de Facturación Médica (Reglas de Fallback)\n"
     report_md += f"**Paciente:** {patient_name}  \n"
@@ -1046,6 +1048,10 @@ def run_ai_audit(prefactura_path, historia_clinica_path):
     # Parse JSON
     parsed_data = parse_json_safely(raw_response)
     
+    if "report_markdown" in parsed_data:
+        processing_line = f"**Método de Procesamiento:** Inteligencia Artificial ({used_api})\n\n"
+        parsed_data["report_markdown"] = processing_line + parsed_data["report_markdown"]
+        
     return parsed_data
 
 
@@ -1285,6 +1291,6 @@ def run_audit(prefactura_path, historia_clinica_path):
         return ai_res
     except Exception as e:
         print(f"AI Audit failed/skipped. Fallback to local rule-based audit: {e}")
-        warning_msg = f"Modo Fallback Activo: No se pudo completar la auditoría con IA ({str(e)}). Se utilizó el motor de reglas locales."
+        warning_msg = f"Fallback por error en API de IA: {str(e)}"
         return run_local_rule_based_audit(prefactura_path, historia_clinica_path, warning_msg=warning_msg)
 
