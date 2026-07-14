@@ -1,0 +1,4 @@
+.env
+run_app.bat
+docs/
+iniciar_NGROK_ftn.bat

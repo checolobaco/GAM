@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gabinete de Auditoría Médica (GAM)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="glass-container">
+        <!-- Header -->
+        <header>
+            <div class="logo-area">
+                <span class="logo-icon">✦</span>
+                <h1>Gabinete de Auditoría Médica (GAM)</h1>
+            </div>
+            <div class="subtitle">Auditor Inteligente de Facturación y Cuentas Médicas</div>
+        </header>
+
+        <!-- Dropzone Section -->
+        <section class="upload-section" id="uploadSection">
+            <div class="drop-grids">
+                <!-- Drop Prefactura -->
+                <div class="drop-zone" id="dropPrefactura">
+                    <input type="file" id="filePrefactura" accept=".pdf" hidden>
+                    <div class="zone-content">
+                        <svg class="file-icon" viewBox="0 0 24 24" width="48" height="48">
+                            <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" fill="currentColor"/>
+                        </svg>
+                        <h3>Prefactura (PDF)</h3>
+                        <p class="file-info" id="infoPrefactura">Arrastra el PDF de la factura aquí o haz clic</p>
+                    </div>
+                </div>
+
+                <!-- Drop Historia Clinica -->
+                <div class="drop-zone" id="dropHistoria">
+                    <input type="file" id="fileHistoria" accept=".pdf" hidden>
+                    <div class="zone-content">
+                        <svg class="file-icon" viewBox="0 0 24 24" width="48" height="48">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z" fill="currentColor"/>
+                        </svg>
+                        <h3>Historia Clínica (PDF)</h3>
+                        <p class="file-info" id="infoHistoria">Arrastra el PDF de la historia aquí o haz clic</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Run Button -->
+            <div class="action-area">
+                <button class="btn-primary" id="btnAudit" disabled>Iniciar Auditoría Automatizada</button>
+            </div>
+        </section>
+
+        <!-- Loading State -->
+        <div class="loading-state hidden" id="loadingState">
+            <div class="spinner"></div>
+            <div class="loading-text" id="loadingText">Procesando documentos y extrayendo textos...</div>
+            <div class="progress-subtext">Esto puede tardar unos segundos para archivos grandes de EMR.</div>
+        </div>
+
+        <!-- Dashboard Section -->
+        <section class="dashboard-section hidden" id="dashboardSection">
+            <!-- Executive Metrics -->
+            <div class="metrics-grid">
+                <div class="metric-card glass">
+                    <div class="metric-title">Admisión / Alta</div>
+                    <div class="metric-val" id="metricDates">-- / --</div>
+                    <div class="metric-sub" id="metricNights">0 noches en total</div>
+                </div>
+                <div class="metric-card glass critical">
+                    <div class="metric-title">Fuga de Facturación (Pérdida)</div>
+                    <div class="metric-val" id="metricLoss">$0.00</div>
+                    <div class="metric-sub">Costo de ítems omitidos</div>
+                </div>
+                <div class="metric-card glass warning">
+                    <div class="metric-title">Días de Estancia Omitidos</div>
+                    <div class="metric-val" id="metricStayDiff">0 días</div>
+                    <div class="metric-sub" id="metricStayDesc">Diferencia de internación</div>
+                </div>
+                <div class="metric-card glass alert">
+                    <div class="metric-title">Alertas de Auditoría</div>
+                    <div class="metric-val" id="metricAlerts">0</div>
+                    <div class="metric-sub">Mismatches y omisiones</div>
+                </div>
+            </div>
+
+            <!-- Tabbed Results Container -->
+            <div class="tab-container glass">
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="tabResumen">Resumen General</button>
+                    <button class="tab-btn" data-tab="tabProcedimientos">Procedimientos</button>
+                    <button class="tab-btn" data-tab="tabEstancias">Estancias</button>
+                    <button class="tab-btn" data-tab="tabMedicamentos">Medicamentos</button>
+                    <button class="tab-btn" data-tab="tabSuministros">Suministros e Insumos</button>
+                    <button class="tab-btn" data-tab="tabMarkdown">Reporte Markdown</button>
+                </div>
+
+                <div class="tab-content-wrapper">
+                    <!-- Tab: Resumen -->
+                    <div class="tab-content active" id="tabResumen">
+                        <div class="summary-tab-grid">
+                            <div class="alert-list-box">
+                                <h3>Alertas Críticas Identificadas</h3>
+                                <ul class="alert-list" id="summaryAlertsList">
+                                    <!-- Alert items -->
+                                </ul>
+                            </div>
+                            <div class="chart-box">
+                                <h3>Distribución de Pérdidas</h3>
+                                <div class="custom-chart-container">
+                                    <div class="chart-bar-row">
+                                        <span class="bar-label">Procedimientos</span>
+                                        <div class="bar-track">
+                                            <div class="bar-fill proc-bar" style="width: 0%"></div>
+                                        </div>
+                                        <span class="bar-value" id="valProcLoss">$0</span>
+                                    </div>
+                                    <div class="chart-bar-row">
+                                        <span class="bar-label">Estancias</span>
+                                        <div class="bar-track">
+                                            <div class="bar-fill stay-bar" style="width: 0%"></div>
+                                        </div>
+                                        <span class="bar-value" id="valStayLoss">$0</span>
+                                    </div>
+                                    <div class="chart-bar-row">
+                                        <span class="bar-label">Medicamentos</span>
+                                        <div class="bar-track">
+                                            <div class="bar-fill med-bar" style="width: 0%"></div>
+                                        </div>
+                                        <span class="bar-value" id="valMedLoss">$0</span>
+                                    </div>
+                                    <div class="chart-bar-row">
+                                        <span class="bar-label">Suministros</span>
+                                        <div class="bar-track">
+                                            <div class="bar-fill sup-bar" style="width: 0%"></div>
+                                        </div>
+                                        <span class="bar-value" id="valSupLoss">$0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab: Procedimientos -->
+                    <div class="tab-content" id="tabProcedimientos">
+                        <div class="table-responsive">
+                            <table class="audit-table">
+                                <thead>
+                                    <tr>
+                                        <th>Código CUPS</th>
+                                        <th>Procedimiento</th>
+                                        <th>Facturado</th>
+                                        <th>Historia Clínica</th>
+                                        <th>Estado</th>
+                                        <th>Detalle / Hallazgo</th>
+                                        <th>Pérdida</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tableProcedimientosBody">
+                                    <!-- Rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Tab: Estancias -->
+                    <div class="tab-content" id="tabEstancias">
+                        <div class="table-responsive">
+                            <table class="audit-table">
+                                <thead>
+                                    <tr>
+                                        <th>Periodo</th>
+                                        <th>Días Facturados</th>
+                                        <th>Noches HC</th>
+                                        <th>Días Faltantes</th>
+                                        <th>Unidad Facturada</th>
+                                        <th>Unidad en HC</th>
+                                        <th>Estado</th>
+                                        <th>Pérdida Estimada</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tableEstanciasBody">
+                                    <!-- Rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Tab: Medicamentos -->
+                    <div class="tab-content" id="tabMedicamentos">
+                        <div class="table-responsive">
+                            <table class="audit-table">
+                                <thead>
+                                    <tr>
+                                        <th>Código / Tipo</th>
+                                        <th>Medicamento</th>
+                                        <th>Dosis Facturadas</th>
+                                        <th>Dosis Formuladas (HC)</th>
+                                        <th>Diferencia</th>
+                                        <th>Estado</th>
+                                        <th>Hallazgo</th>
+                                        <th>Pérdida</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tableMedicamentosBody">
+                                    <!-- Rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Tab: Suministros -->
+                    <div class="tab-content" id="tabSuministros">
+                        <div class="table-responsive">
+                            <table class="audit-table">
+                                <thead>
+                                    <tr>
+                                        <th>Código Insumo</th>
+                                        <th>Insumo / Suministro</th>
+                                        <th>Facturado</th>
+                                        <th>Historia Clínica</th>
+                                        <th>Estado</th>
+                                        <th>Causa Raíz / Justificación Clínica</th>
+                                        <th>Pérdida</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tableSuministrosBody">
+                                    <!-- Rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Tab: Markdown -->
+                    <div class="tab-content" id="tabMarkdown">
+                        <div class="markdown-tab-content">
+                            <div class="md-actions">
+                                <button class="btn-secondary" id="btnCopyMd">Copiar al Portapapeles</button>
+                            </div>
+                            <pre class="md-preview" id="mdPreviewContent"></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- New Audit Button -->
+            <div class="footer-actions">
+                <button class="btn-secondary" id="btnReset">Cargar Nuevos Documentos</button>
+            </div>
+        </section>
+    </div>
+
+    <script src="/static/main.js"></script>
+    <div style="text-align: center; font-size: 0.7em; opacity: 0.3; margin-top: 15px; padding: 10px; color: #a0a0a0;">
+        Gabinete de Auditoría Médica (GAM) by CamRO
+    </div>
+</body>
+</html>
