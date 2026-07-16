@@ -359,19 +359,19 @@ document.addEventListener("DOMContentLoaded", () => {
         data.procedures.forEach(p => {
             const tr = document.createElement("tr");
             const datesList = p.dates || [];
-            const datesButtonHtml = `<button class="btn-dates-action" data-name="${p.name}" data-dates="${datesList.join(',')}">📅 Ver Fechas (${datesList.length})</button>`;
+            const datesButtonHtml = `<button class="btn-dates-action" data-name="${p.name}" data-dates="${datesList.join(',')}" title="Ver fechas y horas de aplicación (${datesList.length})">📅</button>`;
                 
             tr.innerHTML = `
-                <td><strong>${p.code}</strong></td>
-                <td><div style="font-weight: 500;">${p.name}</div></td>
-                <td>${p.billed_qty}</td>
-                <td>${p.hc_qty}</td>
-                <td><span class="status-badge ${p.status.toLowerCase()}">${p.status}</span></td>
-                <td>${p.detail || 'Coincide con historia clínica'}</td>
-                <td class="${p.missing_cost > 0 ? 'text-danger' : 'text-success'}">
+                <td class="col-code"><strong>${p.code}</strong></td>
+                <td class="col-name"><div style="font-weight: 500;">${p.name}</div></td>
+                <td class="col-qty">${p.billed_qty}</td>
+                <td class="col-qty">${p.hc_qty}</td>
+                <td class="col-status"><span class="status-badge ${p.status.toLowerCase()}">${p.status}</span></td>
+                <td class="col-detail">${p.detail || 'Coincide con historia clínica'}</td>
+                <td class="col-loss ${p.missing_cost > 0 ? 'text-danger' : 'text-success'}">
                     ${p.missing_cost > 0 ? `-${formatCOP(p.missing_cost)}` : '$0'}
                 </td>
-                <td>${datesButtonHtml}</td>
+                <td class="col-support">${datesButtonHtml}</td>
             `;
             procBody.appendChild(tr);
         });
@@ -382,18 +382,18 @@ document.addEventListener("DOMContentLoaded", () => {
         data.estancias.forEach(e => {
             const tr = document.createElement("tr");
             const datesList = e.dates || [];
-            const datesButtonHtml = `<button class="btn-dates-action" data-name="Estancia: ${e.observed_unit}" data-dates="${datesList.join(',')}">📅 Ver Fechas (${datesList.length})</button>`;
+            const datesButtonHtml = `<button class="btn-dates-action" data-name="Estancia: ${e.observed_unit}" data-dates="${datesList.join(',')}" title="Ver fechas y horas de estancia (${datesList.length})">📅</button>`;
             
             tr.innerHTML = `
-                <td><div style="font-weight: 500;">${e.period}</div></td>
-                <td>${e.billed_stays}</td>
-                <td>${e.hc_nights}</td>
-                <td class="text-danger">${e.missing_days} días</td>
-                <td>${e.billed_unit}</td>
-                <td>${e.observed_unit}</td>
-                <td><span class="status-badge discrepancia">${e.status}</span></td>
-                <td class="text-danger">-${formatCOP(e.missing_cost)}</td>
-                <td>${datesButtonHtml}</td>
+                <td class="col-name"><div style="font-weight: 500;">${e.period}</div></td>
+                <td class="col-qty">${e.billed_stays}</td>
+                <td class="col-qty">${e.hc_nights}</td>
+                <td class="col-qty text-danger">${e.missing_days} días</td>
+                <td class="col-name">${e.billed_unit}</td>
+                <td class="col-name">${e.observed_unit}</td>
+                <td class="col-status"><span class="status-badge discrepancia">${e.status}</span></td>
+                <td class="col-loss text-danger">-${formatCOP(e.missing_cost)}</td>
+                <td class="col-support">${datesButtonHtml}</td>
             `;
             stayBody.appendChild(tr);
         });
@@ -405,20 +405,20 @@ document.addEventListener("DOMContentLoaded", () => {
             const diff = m.hc_qty - m.billed_qty;
             const tr = document.createElement("tr");
             const datesList = m.dates || [];
-            const datesButtonHtml = `<button class="btn-dates-action" data-name="${m.name}" data-dates="${datesList.join(',')}">📅 Ver Fechas (${datesList.length})</button>`;
+            const datesButtonHtml = `<button class="btn-dates-action" data-name="${m.name}" data-dates="${datesList.join(',')}" title="Ver fechas y horas de administración (${datesList.length})">📅</button>`;
             
             tr.innerHTML = `
-                <td><strong>${m.code}</strong></td>
-                <td><div style="font-weight: 500;">${m.name}</div></td>
-                <td>${m.billed_qty}</td>
-                <td>${m.hc_qty}</td>
-                <td class="${diff > 0 ? 'text-danger' : 'text-success'}">${diff > 0 ? `+${diff}` : diff}</td>
-                <td><span class="status-badge ${m.status.toLowerCase()}">${m.status}</span></td>
-                <td>${m.detail || 'Consumo conciliado'}</td>
-                <td class="${m.missing_cost > 0 ? 'text-danger' : 'text-success'}">
+                <td class="col-code"><strong>${m.code}</strong></td>
+                <td class="col-name"><div style="font-weight: 500;">${m.name}</div></td>
+                <td class="col-qty">${m.billed_qty}</td>
+                <td class="col-qty">${m.hc_qty}</td>
+                <td class="col-qty ${diff > 0 ? 'text-danger' : 'text-success'}">${diff > 0 ? `+${diff}` : diff}</td>
+                <td class="col-status"><span class="status-badge ${m.status.toLowerCase()}">${m.status}</span></td>
+                <td class="col-detail">${m.detail || 'Consumo conciliado'}</td>
+                <td class="col-loss ${m.missing_cost > 0 ? 'text-danger' : 'text-success'}">
                     ${m.missing_cost > 0 ? `-${formatCOP(m.missing_cost)}` : '$0'}
                 </td>
-                <td>${datesButtonHtml}</td>
+                <td class="col-support">${datesButtonHtml}</td>
             `;
             medBody.appendChild(tr);
         });
@@ -429,19 +429,19 @@ document.addEventListener("DOMContentLoaded", () => {
         data.supplies.forEach(s => {
             const tr = document.createElement("tr");
             const datesList = s.dates || [];
-            const datesButtonHtml = `<button class="btn-dates-action" data-name="${s.name}" data-dates="${datesList.join(',')}">📅 Ver Fechas (${datesList.length})</button>`;
+            const datesButtonHtml = `<button class="btn-dates-action" data-name="${s.name}" data-dates="${datesList.join(',')}" title="Ver fechas y horas de insumo (${datesList.length})">📅</button>`;
                 
             tr.innerHTML = `
-                <td><strong>${s.code}</strong></td>
-                <td><div style="font-weight: 500;">${s.name}</div></td>
-                <td>${s.billed_qty}</td>
-                <td>${s.hc_qty}</td>
-                <td><span class="status-badge ${s.status.toLowerCase()}">${s.status}</span></td>
-                <td>${s.detail || 'Conciliado de forma correcta'}</td>
-                <td class="${s.missing_cost > 0 ? 'text-danger' : 'text-success'}">
+                <td class="col-code"><strong>${s.code}</strong></td>
+                <td class="col-name"><div style="font-weight: 500;">${s.name}</div></td>
+                <td class="col-qty">${s.billed_qty}</td>
+                <td class="col-qty">${s.hc_qty}</td>
+                <td class="col-status"><span class="status-badge ${s.status.toLowerCase()}">${s.status}</span></td>
+                <td class="col-detail">${s.detail || 'Conciliado de forma correcta'}</td>
+                <td class="col-loss ${s.missing_cost > 0 ? 'text-danger' : 'text-success'}">
                     ${s.missing_cost > 0 ? `-${formatCOP(s.missing_cost)}` : '$0'}
                 </td>
-                <td>${datesButtonHtml}</td>
+                <td class="col-support">${datesButtonHtml}</td>
             `;
             supBody.appendChild(tr);
         });
@@ -452,4 +452,77 @@ document.addEventListener("DOMContentLoaded", () => {
         // Show Dashboard
         dashboardSection.classList.remove("hidden");
     };
+
+    // GAMi Chat Integration
+    const chatMessages = document.getElementById("chatMessages");
+    const chatInput = document.getElementById("chatInput");
+    const btnSendChat = document.getElementById("btnSendChat");
+    
+    let chatHistory = [];
+    
+    function addChatMessage(role, content, isHtml = false) {
+        const div = document.createElement("div");
+        div.className = `chat-msg ${role}`;
+        if (role === "system") {
+            div.innerHTML = `<strong>GAMi:</strong> `;
+        } else if (role === "user") {
+            div.innerHTML = `<strong>Tú:</strong> `;
+        }
+        
+        if (isHtml) {
+            div.innerHTML += content;
+        } else {
+            const span = document.createElement("span");
+            span.textContent = content;
+            div.appendChild(span);
+        }
+        
+        chatMessages.appendChild(div);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        return div;
+    }
+    
+    async function sendChatMessage() {
+        const query = chatInput.value.trim();
+        if (!query) return;
+        
+        addChatMessage("user", query);
+        chatInput.value = "";
+        
+        chatHistory.push({ role: "user", content: query });
+        
+        const thinkingDiv = addChatMessage("thinking", "GAMi está pensando...", false);
+        
+        try {
+            const response = await fetch("/api/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ messages: chatHistory })
+            });
+            
+            thinkingDiv.remove();
+            
+            if (response.ok) {
+                const resData = await response.json();
+                addChatMessage("system", resData.answer);
+                chatHistory.push({ role: "assistant", content: resData.answer });
+            } else {
+                const errData = await response.json();
+                const errorText = errData.detail || "Error al procesar la pregunta.";
+                addChatMessage("system", `⚠️ ${errorText}`, true);
+                chatHistory.pop();
+            }
+        } catch (err) {
+            thinkingDiv.remove();
+            addChatMessage("system", `⚠️ Error de red o comunicación: no se pudo conectar con el servidor.`, true);
+            chatHistory.pop();
+        }
+    }
+    
+    btnSendChat.addEventListener("click", sendChatMessage);
+    chatInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+            sendChatMessage();
+        }
+    });
 });

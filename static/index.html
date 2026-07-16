@@ -96,6 +96,7 @@
                     <button class="tab-btn" data-tab="tabMedicamentos">Medicamentos</button>
                     <button class="tab-btn" data-tab="tabSuministros">Suministros e Insumos</button>
                     <button class="tab-btn" data-tab="tabMarkdown">Reporte Markdown</button>
+                    <button class="tab-btn" data-tab="tabChat">Chat con GAMi</button>
                 </div>
 
                 <div class="tab-content-wrapper">
@@ -150,14 +151,14 @@
                             <table class="audit-table">
                                 <thead>
                                     <tr>
-                                        <th>Código CUPS</th>
-                                        <th>Procedimiento</th>
-                                        <th>Facturado</th>
-                                        <th>Historia Clínica</th>
-                                        <th>Estado</th>
-                                        <th>Detalle / Hallazgo</th>
-                                        <th>Pérdida</th>
-                                        <th>Soporte HC</th>
+                                        <th class="col-code">Código CUPS</th>
+                                        <th class="col-name">Procedimiento</th>
+                                        <th class="col-qty">Facturado</th>
+                                        <th class="col-qty">Historia Clínica</th>
+                                        <th class="col-status">Estado</th>
+                                        <th class="col-detail">Detalle / Hallazgo</th>
+                                        <th class="col-loss">Pérdida</th>
+                                        <th class="col-support">Soporte HC</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tableProcedimientosBody">
@@ -173,15 +174,15 @@
                             <table class="audit-table">
                                 <thead>
                                     <tr>
-                                        <th>Periodo</th>
-                                        <th>Días Facturados</th>
-                                        <th>Noches HC</th>
-                                        <th>Días Faltantes</th>
-                                        <th>Unidad Facturada</th>
-                                        <th>Unidad en HC</th>
-                                        <th>Estado</th>
-                                        <th>Pérdida Estimada</th>
-                                        <th>Soporte HC</th>
+                                        <th class="col-name">Periodo</th>
+                                        <th class="col-qty">Días Facturados</th>
+                                        <th class="col-qty">Noches HC</th>
+                                        <th class="col-qty">Días Faltantes</th>
+                                        <th class="col-name">Unidad Facturada</th>
+                                        <th class="col-name">Unidad en HC</th>
+                                        <th class="col-status">Estado</th>
+                                        <th class="col-loss">Pérdida Estimada</th>
+                                        <th class="col-support">Soporte HC</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tableEstanciasBody">
@@ -197,15 +198,15 @@
                             <table class="audit-table">
                                 <thead>
                                     <tr>
-                                        <th>Código / Tipo</th>
-                                        <th>Medicamento</th>
-                                        <th>Dosis Facturadas</th>
-                                        <th>Dosis Formuladas (HC)</th>
-                                        <th>Diferencia</th>
-                                        <th>Estado</th>
-                                        <th>Hallazgo</th>
-                                        <th>Pérdida</th>
-                                        <th>Soporte HC</th>
+                                        <th class="col-code">Código / Tipo</th>
+                                        <th class="col-name">Medicamento</th>
+                                        <th class="col-qty">Dosis Facturadas</th>
+                                        <th class="col-qty">Dosis Formuladas (HC)</th>
+                                        <th class="col-qty">Diferencia</th>
+                                        <th class="col-status">Estado</th>
+                                        <th class="col-detail">Hallazgo</th>
+                                        <th class="col-loss">Pérdida</th>
+                                        <th class="col-support">Soporte HC</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tableMedicamentosBody">
@@ -221,14 +222,14 @@
                             <table class="audit-table">
                                 <thead>
                                     <tr>
-                                        <th>Código Insumo</th>
-                                        <th>Insumo / Suministro</th>
-                                        <th>Facturado</th>
-                                        <th>Historia Clínica</th>
-                                        <th>Estado</th>
-                                        <th>Causa Raíz / Justificación Clínica</th>
-                                        <th>Pérdida</th>
-                                        <th>Soporte HC</th>
+                                        <th class="col-code">Código Insumo</th>
+                                        <th class="col-name">Insumo / Suministro</th>
+                                        <th class="col-qty">Facturado</th>
+                                        <th class="col-qty">Historia Clínica</th>
+                                        <th class="col-status">Estado</th>
+                                        <th class="col-detail">Causa Raíz / Justificación Clínica</th>
+                                        <th class="col-loss">Pérdida</th>
+                                        <th class="col-support">Soporte HC</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tableSuministrosBody">
@@ -245,6 +246,20 @@
                                 <button class="btn-secondary" id="btnCopyMd">Copiar al Portapapeles</button>
                             </div>
                             <pre class="md-preview" id="mdPreviewContent"></pre>
+                        </div>
+                    </div>
+                    <!-- Tab: Chat -->
+                    <div class="tab-content" id="tabChat">
+                        <div class="chat-tab-content">
+                            <div class="chat-messages" id="chatMessages">
+                                <div class="chat-msg system">
+                                    <strong>GAMi:</strong> ¡Hola! He analizado los documentos de la auditoría. Puedes hacerme preguntas sobre medicamentos, procedimientos, estancias, insumos o cualquier hallazgo de la cuenta médica del paciente. ¿En qué te puedo ayudar hoy?
+                                </div>
+                            </div>
+                            <div class="chat-input-area">
+                                <input type="text" id="chatInput" placeholder="Hazle una pregunta a GAMi sobre la auditoría..." />
+                                <button class="btn-primary" id="btnSendChat">Enviar</button>
+                            </div>
                         </div>
                     </div>
                 </div>
