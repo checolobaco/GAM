@@ -21,6 +21,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const btnCopyMd = document.getElementById("btnCopyMd");
     const mdPreviewContent = document.getElementById("mdPreviewContent");
 
+    // GAMi Chat References & State
+    const chatMessages = document.getElementById("chatMessages");
+    const chatInput = document.getElementById("chatInput");
+    const btnSendChat = document.getElementById("btnSendChat");
+    let chatHistory = [];
+
     // Modal Control Elements
     const datesModal = document.getElementById("datesModal");
     const modalTitle = document.getElementById("modalTitle");
@@ -449,16 +455,21 @@ document.addEventListener("DOMContentLoaded", () => {
         // 8. Render Markdown text
         mdPreviewContent.textContent = data.report_markdown;
 
+        // Reset and reinitialize GAMi Chat
+        chatHistory = [];
+        chatMessages.innerHTML = "";
+        const welcomeText = `¡Hola! He analizado los documentos de la auditoría de <strong>${data.patient_name || 'el paciente'}</strong>. Puedes hacerme preguntas sobre medicamentos, procedimientos, estancias, insumos o cualquier hallazgo de la cuenta médica. ¿En qué te puedo ayudar hoy?`;
+        
+        const welcomeDiv = document.createElement("div");
+        welcomeDiv.className = "chat-msg system";
+        welcomeDiv.innerHTML = `<strong>GAMi:</strong> ${welcomeText}`;
+        chatMessages.appendChild(welcomeDiv);
+
         // Show Dashboard
         dashboardSection.classList.remove("hidden");
     };
 
     // GAMi Chat Integration
-    const chatMessages = document.getElementById("chatMessages");
-    const chatInput = document.getElementById("chatInput");
-    const btnSendChat = document.getElementById("btnSendChat");
-    
-    let chatHistory = [];
     
     function addChatMessage(role, content, isHtml = false) {
         const div = document.createElement("div");
