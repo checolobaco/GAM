@@ -197,6 +197,8 @@ def parse_prefactura(reader):
 
 def parse_historia_clinica(reader):
     hc_data = {
+        "patient_name": "Paciente Desconocido",
+        "patient_id": "Desconocido",
         "admission_date": None,
         "discharge_date": None,
         "nights": 0,
@@ -211,6 +213,23 @@ def parse_historia_clinica(reader):
     for idx, page in enumerate(reader.pages):
         text = page.extract_text()
         pages.append(text if text else "")
+        
+    hc_patient_id = "Desconocido"
+    hc_patient_name = "Paciente Desconocido"
+    if len(pages) > 0:
+        p1_text = pages[0]
+        m = re.search(r'\bCC\s+(\d+)\s+--\s+(.+)', p1_text, re.IGNORECASE)
+        if m:
+            hc_patient_id = m.group(1).strip()
+            hc_patient_name = m.group(2).strip().upper()
+            hc_patient_name = re.sub(r'\s+', ' ', hc_patient_name)
+        else:
+            m_id = re.search(r'\bCC\s+(\d+)\b|\bCC\s*(\d+)\b', p1_text, re.IGNORECASE)
+            if m_id:
+                hc_patient_id = [g for g in m_id.groups() if g][0].strip()
+                
+    hc_data["patient_name"] = hc_patient_name
+    hc_data["patient_id"] = hc_patient_id
         
     page_dates = []
     page_datetimes = []
@@ -712,8 +731,38 @@ def run_local_rule_based_audit(prefactura_path, historia_clinica_path, warning_m
         missing_stay_cost
     )
     
+    # Validate patient match
+    pf_id = audit_results.get("patient_id")
+    hc_id = hc_data.get("patient_id")
+    
+    pf_name = audit_results.get("patient_name")
+    hc_name = hc_data.get("patient_name")
+    
+    patient_match = True
+    patient_mismatch_detail = ""
+    
+    if pf_id and hc_id and pf_id != "Desconocida" and hc_id != "Desconocido":
+        if pf_id != hc_id:
+            patient_match = False
+            patient_mismatch_detail = f"Identificación C.C. no coincide: Prefactura ({pf_id}) vs Historia Clínica ({hc_id})"
+    elif pf_name and hc_name and pf_name != "Paciente Desconocido" and hc_name != "Paciente Desconocido":
+        clean_pf_name = re.sub(r'[^A-Z]', '', pf_name)
+        clean_hc_name = re.sub(r'[^A-Z]', '', hc_name)
+        if clean_pf_name != clean_hc_name:
+            patient_match = False
+            patient_mismatch_detail = f"Nombre no coincide: Prefactura ({pf_name}) vs Historia Clínica ({hc_name})"
+            
+    audit_results["patient_match"] = patient_match
+    audit_results["patient_mismatch_detail"] = patient_mismatch_detail
+    audit_results["hc_patient_name"] = hc_name
+    audit_results["hc_patient_id"] = hc_id
+
     # Generate report markdown
     report_md = ""
+    if not patient_match:
+        report_md += f"⚠️ **ADVERTENCIA CRÍTICA DE AUDITORÍA: LOS DOCUMENTOS PERTENECEN A PACIENTES DISTINTOS**\n"
+        report_md += f"*   {patient_mismatch_detail}\n\n"
+
     if warning_msg:
         report_md += f"**Método de Procesamiento:** Motor de Reglas Locales ({warning_msg})\n\n"
     else:
